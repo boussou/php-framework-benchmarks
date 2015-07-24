@@ -77,7 +77,7 @@ Install the frameworks
     curl -sS https://getcomposer.org/installer | php
     mv composer.phar /usr/local/bin/composer
 
-### install lumen
+### install Lumen
 --------------------
 Got the procedure from the lumen website
 
@@ -130,26 +130,26 @@ Got the procedure from the lumen website
     \$app->run();
     LONGSTRING
     
-### Install Slim
+### summary
 --------------------
 
 Debian GNU/Linux 8.1 (jessie)
 
 PHP 5.6.9-0+deb8u1 (cli) (built: Jun  5 2015 11:03:27)
 
- 7:30 for the setup from scratch
+
+> 7:30 for the setup from scratch
 
 
 Running the Benchmarks
 ======================
 
-
-I took the same ab command as from http://taylorotwell.com/how-lumen-is-benchmarked/.
+I took the same ab command as from http://taylorotwell.com/how-lumen-is-benchmarked/.  
 Put it in an alias to ease the thing.
 
     alias bench='ab -t 10 -c 10 -k '
 
-now the bench commands will be  
+now the bench commands will be like  
 
     bench http://<ip>/lumen/public/|grep "Requests per second"
 
@@ -158,7 +158,7 @@ At the end of the benchmark execution, there's no collating - you will just take
 Run the bench command several times to be certain to get an real average value.
 
 
-Benchmarks Logs 2015 07 24
+Benchmarks Logs - 2015 07 24
 ==========================
 
 
@@ -250,8 +250,9 @@ So this is **"the cost of the bloat"** ;-)
     
 **Just to play, let's compare with fatfree**
 
-this is a fatfree project that uses composer (not mandatory with F3)
-https://github.com/F3Community/fatfree-composer-app
+The followin project is a fatfree project that uses composer (not mandatory with F3)
+https://github.com/F3Community/fatfree-composer-app.  
+it will be used to because it has composer integration (usually not mandatory) + it load 1 file for the controller (which is equivalent to the extra file for routes in other frameworks).
 
 **FATFREE Composer**
 
@@ -259,7 +260,7 @@ https://github.com/F3Community/fatfree-composer-app
     Requests per second:    663.94 [#/sec] (mean)
     Requests per second:    682.47 [#/sec] (mean)
     
-Let's redo this:
+Let's redo the **whole thing**:
 
     bench http://<IP>/lumen/public/|grep "Requests per second"
     bench http://<IP>/slim3/api/fake/mickey|grep "Requests per second"
@@ -282,9 +283,9 @@ Benchmarks Logs 2015 07 24 - Extended x 3
 Before they ask: 
 let's fine tune opcache
 
-**Before opcache opt**
+**Before opcache optimization**
 
-Run:
+Run this:
  
     bench http://<IP>/lumen/public/|grep "Requests per second"
     bench http://<IP>/slim3/api/fake/mickey|grep "Requests per second"
@@ -300,7 +301,9 @@ Results:
     Requests per second:    5179.38 [#/sec] (mean)
     Requests per second:    651.75 [#/sec] (mean)
     
-**After opcache opt**
+**After opcache optimization**
+    
+Results:
 
     Requests per second:    215.47 [#/sec] (mean)
     Requests per second:    365.61 [#/sec] (mean)
@@ -309,3 +312,8 @@ Results:
     Requests per second:    418.82 [#/sec] (mean)
     
 (worst!)was it supposed to optimize? ;-)
+
+So never make any assumption on the expected results, they always surprising.
+
+
+
