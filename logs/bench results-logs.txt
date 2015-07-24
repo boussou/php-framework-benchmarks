@@ -1,0 +1,122 @@
+This is answser to the reddit thread
+"is it me, or Laravel Lumen is actually pure sham? webspicy.blogspot.fr"
+and to 
+http://taylorotwell.com/how-lumen-is-benchmarked/
+
+The test machine: AWS t1.micro 0.613 EBS only
+Image: Linux/Unix, Debian 8.1 | 64-bit Amazon Machine Image (AMI) | Updated: 6/24/15
+
+I am following the protocol (partly) by pmjones
+https://github.com/pmjones/php-framework-benchmarks
+
+Debian GNU/Linux 8.1 (jessie)
+PHP 5.6.9-0+deb8u1 (cli) (built: Jun  5 2015 11:03:27)
+ 7:30 for the setup from scratch
+
+here it fail because git ask you to create a personal token on their website.
+You follow the link,
+you copy/paste it & the composer install goes to the end.
+
+LUMEN (without optimisitation)
+Requests per second:    295.18 [#/sec] (mean)
+Requests per second:    294.84 [#/sec] (mean)
+Requests per second:    291.27 [#/sec] (mean)
+Requests per second:    296.27 [#/sec] (mean)
+Requests per second:    302.16 [#/sec] (mean)
+
+LUMEN (with optimisitation)
+Yes, composer seems actually slowing it down !
+Requests per second:    268.00 [#/sec] (mean)
+Requests per second:    263.43 [#/sec] (mean)
+Requests per second:    265.45 [#/sec] (mean)
+this is the selected empirical average value
+don't question it, the test is wrong (because the client is in the same box)
+;-)
+
+Slim 3
+Requests per second:    494.07 [#/sec] (mean)
+Requests per second:    494.91 [#/sec] (mean)
+Requests per second:    497.98 [#/sec] (mean)
+
+So Slim 3 seems 60% to 70% faster
+So seen a lot of variation during the tests
+just tu cross check, let's do lumen again
+
+LARAVEL (veeeery long)
+Requests per second:    43.29 [#/sec] (mean)
+Requests per second:    45.47 [#/sec] (mean)
+(I am not patient enough to do several tests)
+is there any difference if we "optimize"??
+Requests per second:    44.75 [#/sec] (mean)
+Requests per second:    42.22 [#/sec] (mean)
+
+3 frameworks (badly) compared:
+LUMEN   Requests per second:    242.29 [#/sec] (mean)
+SLIM3   Requests per second:    485.59 [#/sec] (mean)
+LARAVEL Requests per second:     43.29 [#/sec] (mean)
+1 order of magnitude slim vs laravel
+x2 slim3 vs lumen (slim 2 is faster than slim 3)
+that's the conclusion of this part.
+
+let's measure the bloat
+Raw PHP
+
+bench http://54.211.150.222/lumen/public/|grep "Requests per second"
+bench http://54.211.150.222/slim3/api/fake/mickey|grep "Requests per second"
+bench http://54.211.150.222/laravel/public/|grep "Requests per second"
+bench http://54.211.150.222/raw|grep "Requests per second"
+bench http://54.211.150.222/fatfree-composer-app-master/|grep "Requests per second"
+
+Requests per second:    5179.26 [#/sec] (mean)
+Requests per second:    5248.06 [#/sec] (mean)
+
+This is "the cost of the bloat" ;-)
+LUMEN 		Requests per second:    240.53 [#/sec] (mean)
+SLIM3 		Requests per second:    497.75 [#/sec] (mean)
+LARAVEL 5 	Requests per second:    47.27 [#/sec] (mean)
+RAW PHP 	Requests per second:    5248.06 [#/sec] (mean)
+
+# just to play, let's compare with fatfree
+this is a fatfree project that uses composer (not mandatory with F3)
+https://github.com/F3Community/fatfree-composer-app
+FATFREE Composer  
+Requests per second:    662.44 [#/sec] (mean)
+Requests per second:    663.94 [#/sec] (mean)
+Requests per second:    682.47 [#/sec] (mean)
+
+bench http://54.211.150.222/lumen/public/|grep "Requests per second"
+bench http://54.211.150.222/slim3/api/fake/mickey|grep "Requests per second"
+bench http://54.211.150.222/laravel/public/|grep "Requests per second"
+bench http://54.211.150.222/raw|grep "Requests per second"
+bench http://54.211.150.222/fatfree-composer-app-master/|grep "Requests per second"
+
+LUMEN Requests per second:    254.17 [#/sec] (mean)
+SLIM3 Requests per second:    473.72 [#/sec] (mean)
+LARAVEL 5 Requests per second:    45.08 [#/sec] (mean)
+RAW PHP Requests per second:    4580.21 [#/sec] (mean)
+FATFREE COMPOSER Requests per second:    655.92 [#/sec] (mean)
+
+=========================================================
+before they ask
+let's fine tune opcache
+my PC rebooted (f..g win8)
+
+Before opcache opt
+bench http://54.211.150.222/lumen/public/|grep "Requests per second"
+bench http://54.211.150.222/slim3/api/fake/mickey|grep "Requests per second"
+bench http://54.211.150.222/laravel/public/|grep "Requests per second"
+bench http://54.211.150.222/raw|grep "Requests per second"
+bench http://54.211.150.222/fatfree-composer-app-master/|grep "Requests per second"
+Requests per second:    250.88 [#/sec] (mean)
+Requests per second:    493.69 [#/sec] (mean)
+Requests per second:    44.70 [#/sec] (mean)
+Requests per second:    5179.38 [#/sec] (mean)
+Requests per second:    651.75 [#/sec] (mean)
+
+after opcache opt (worst!)
+Requests per second:    215.47 [#/sec] (mean)
+Requests per second:    365.61 [#/sec] (mean)
+Requests per second:    1.69 [#/sec] (mean)
+Requests per second:    424.66 [#/sec] (mean)
+Requests per second:    418.82 [#/sec] (mean)
+was it supposed to optimize? ;-)

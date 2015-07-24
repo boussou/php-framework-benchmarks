@@ -1,0 +1,219 @@
+This is answser to the reddit thread "is it me, or Laravel Lumen is actually pure sham? webspicy.blogspot.fr"
+<https://www.reddit.com/r/PHP/comments/3dz8hi/is_it_me_or_laravel_lumen_is_actually_pure_sham/>
+and to
+<http://taylorotwell.com/how-lumen-is-benchmarked/>
+
+Linux/Unix, Debian 8.1 | 64-bit Amazon Machine Image (AMI) | Updated: 6/24/15
+
+t1.micro 0.613 EBS only
+
+==============================================
+# become root
+sudo -s
+
+# initial updates
+apt-get update
+apt-get upgrade -y
+
+
+#-->apache2, php, curl 
+apt-get install -y \
+    libapache2-mod-php5 \
+    curl \
+    php5 
+ 
+
+# modify the Apache DocumentRoot for the .htaccess
+sed -i "s/AllowOverride None/AllowOverride All/" /etc/apache2/apache2.conf 
+
+# turn on mod_rewrite
+a2enmod rewrite
+
+# restart apache
+service apache2 restart
+
+==============================================
+# install composer
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer
+==============================================
+# install lumen
+cd /var/www/html
+rm index.html
+
+composer create-project laravel/lumen --prefer-dist
+# here it fail because git ask you to create a personal token on their website.
+# you copy/paste it & the composer install goes to the end.
+
+#route to capture every route that's passed through.
+
+cp /var/www/html/lumen/app/Http/routes.php /var/www/html/lumen/app/Http/routes.old.php
+
+cat <<LONGSTRING  >>/var/www/html/lumen/app/Http/routes.php
+\$app->get('{path:.*}', function(\$path)
+{
+      header('Content-Type: '.('application/json').'; '.'charset=utf-8');
+      echo json_encode(array('id'=>rand(),'name' => 'mickey', 'state' => \$_SERVER['REQUEST_METHOD']));
+        
+});
+LONGSTRING
+
+# from http://taylorotwell.com/how-lumen-is-benchmarked/				
+
+alias bench='ab -t 10 -c 10 -k '
+bench http://54.211.150.222/lumen/public/|grep "Requests per second"
+
+Requests per second:    294.75 [#/sec] (mean)
+Requests per second:    313.21 [#/sec] (mean)
+Requests per second:    305.01 [#/sec] (mean)
+
+composer dump-autoload -o				
+
+Requests per second:    289.24 [#/sec] (mean)
+Requests per second:    286.73 [#/sec] (mean)
+
+==============================================
+mkdir slim3
+cd slim3/
+composer require slim/slim
+
+
+cat <<LONGSTRING  >>/var/www/html/slim3/.htaccess
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
+LONGSTRING
+
+cat <<LONGSTRING  >>/var/www/html/slim3/index.php
+<?php
+require 'vendor/autoload.php';
+
+\$app = new \Slim\Slim();
+\$app->get('/api/fake/:name', function (\$name) {
+    header('Content-Type: '.('application/json').'; '.'charset=utf-8');
+     echo json_encode(array('id'=>rand(),'name' => 'mickey', 'state' => \$_SERVER['REQUEST_METHOD']));
+
+});
+\$app->run();
+LONGSTRING
+
+
+http://54.211.171.144/slim3/api/fake/mickey
+you should check that the url answer the proper json
+
+bench http://54.211.150.222/slim3/api/fake/mickey|grep "Requests per second"
+
+ 
+Requests per second:    501.97 [#/sec] (mean)
+Requests per second:    504.64 [#/sec] (mean)
+Requests per second:    509.41 [#/sec] (mean)
+
+==========================================
+cat <<LONGSTRING  >>/var/www/html/slim3/index.php
+<?php
+require 'vendor/autoload.php';
+
+\$app = new \Slim\Slim();
+\$app->get('/api/fake/:name', function (\$name) {
+    header('Content-Type: '.('application/json').'; '.'charset=utf-8');
+     echo json_encode(array('id'=>rand(),'name' => 'mickey', 'state' => \$_SERVER['REQUEST_METHOD']));
+
+});
+\$app->run();
+LONGSTRING
+
+==============================================
+composer create-project laravel/laravel --prefer-dist
+
+cat <<LONGSTRING  >>/var/www/html/laravel/app/Http/routes.php
+\$app->get('{path:.*}', function(\$path)
+{
+      header('Content-Type: '.('application/json').'; '.'charset=utf-8');
+      echo json_encode(array('id'=>rand(),'name' => 'mickey', 'state' => \$_SERVER['REQUEST_METHOD']));
+        
+});
+LONGSTRING
+
+cat <<LONGSTRING  >>/var/www/html/laravel/app/Http/routes.php
+Route::get('/fake/api', function()
+{
+      header('Content-Type: '.('application/json').'; '.'charset=utf-8');
+      echo json_encode(array('id'=>rand(),'name' => 'mickey', 'state' => \$_SERVER['REQUEST_METHOD']));
+
+});
+LONGSTRING
+
+bench http://54.211.150.222/laravel/public/|grep "Requests per second"
+==============================================
+let's measure the bloat
+raw PHP
+
+mkdir /var/www/html/raw
+
+cat <<LONGSTRING  >>/var/www/html/raw/index.php
+<?php
+      header('Content-Type: '.('application/json').'; '.'charset=utf-8');
+      echo json_encode(array('id'=>rand(),'name' => 'mickey', 'state' => \$_SERVER['REQUEST_METHOD']));
+LONGSTRING
+
+bench http://54.211.150.222/raw|grep "Requests per second"
+====================================
+bench http://54.211.150.222/fatfree/fatfree-composer-app-master/|grep "Requests per second"
+bench http://54.211.150.222/fatfree/fatfree-master|grep "Requests per second"
+cat <<LONGSTRING  >/var/www/html/fatfree/fatfree-master/index.php
+<?php
+\$f3=require('lib/base.php');
+\$f3->set('AUTOLOAD', 'app/');
+$f3->route('GET /','Controller\Foo->bar');
+LONGSTRING
+mkdir app
+cat <<LONGSTRING  >/var/www/html/fatfree-composer-app-master/app/controller/foo.php
+
+<?php
+namespace Controller;
+class Foo {
+        function bar(\\Base \$f3, \$params) {
+    header('Content-Type: '.('application/json').'; '.'charset=utf-8');
+      echo json_encode(array('id'=>rand(),'name' => 'mickey', 'state' => \$_SERVER['REQUEST_METHOD']));
+
+        }
+}
+
+LONGSTRING
+bench http://54.211.150.222/fatfree-composer-app-master/|grep "Requests per second"
+
+====================================
+http://stackoverflow.com/questions/17224798/how-to-use-php-opcache
+http://fideloper.com/install-zend-opcache
+====================================
+
+; Sets how much memory to use
+opcache.memory_consumption=128
+
+;Sets how much memory should be used by OPcache for storing internal strings 
+;(e.g. classnames and the files they are contained in)
+opcache.interned_strings_buffer=8
+
+; The maximum number of files OPcache will cache
+opcache.max_accelerated_files=4000
+
+;How often (in seconds) to check file timestamps for changes to the shared
+;memory storage allocation.
+opcache.revalidate_freq=60
+
+;If enabled, a fast shutdown sequence is used for the accelerated code
+;The fast shutdown sequence doesn't free each allocated block, but lets
+;the Zend Engine Memory Manager do the work.
+opcache.fast_shutdown=1
+
+;Enables the OPcache for the CLI version of PHP.
+opcache.enable_cli=1
+
+
+cat <<LONGSTRING  >/var/www/html/info.php
+<?php
+echo phpinfo();
+LONGSTRING
+http://54.211.150.222/info.php
+
+===========
