@@ -13,7 +13,10 @@ Notes
 > 
 >  I have been questionned about the results, and usually people when they are challenged don't take time to prove what they say. This time I took it (thanks to @lordofworms at reddit ;-) )
 
-Notes 2:
+
+Youtube Video!
+=========================
+
 > I recorded the entire process --> see https://www.youtube.com/watch?v=QA07YEIRN4Q&feature=em-upload_owner
 > This is how you can reproduce this from scratch - using an Amazon EC2 machine.
 
